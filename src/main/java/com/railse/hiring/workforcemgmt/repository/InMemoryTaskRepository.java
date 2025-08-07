@@ -1,20 +1,20 @@
 package com.railse.hiring.workforcemgmt.repository;
 
 
-import com.railse.hiring.workforcemgmt.common.model.enums.ReferenceType;
-import com.railse.hiring.workforcemgmt.model.TaskManagement;
-import com.railse.hiring.workforcemgmt.model.enums.Priority;
-import com.railse.hiring.workforcemgmt.model.enums.Task;
-import com.railse.hiring.workforcemgmt.model.enums.TaskStatus;
-import org.springframework.stereotype.Repository;
-
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+
+import com.railse.hiring.workforcemgmt.common.model.enums.ReferenceType;
+import org.springframework.stereotype.Repository;
+
+import com.railse.hiring.workforcemgmt.model.TaskManagement;
+import com.railse.hiring.workforcemgmt.model.enums.Priority;
+import com.railse.hiring.workforcemgmt.model.enums.Task;
+import com.railse.hiring.workforcemgmt.model.enums.TaskStatus;
 
 
 @Repository
@@ -47,7 +47,8 @@ public class InMemoryTaskRepository implements TaskRepository {
         newTask.setStatus(status);
         newTask.setPriority(priority);
         newTask.setDescription("This is a seed task.");
-        newTask.setTaskDeadlineTime(System.currentTimeMillis() + 86400000); // 1 day from now
+        newTask.setTaskDeadlineTime(System.currentTimeMillis() + 86400000);// 1 day from now
+        newTask.setCreatedAt(System.currentTimeMillis());
         taskStore.put(newId, newTask);
     }
 
@@ -62,6 +63,9 @@ public class InMemoryTaskRepository implements TaskRepository {
     public TaskManagement save(TaskManagement task) {
         if (task.getId() == null) {
             task.setId(idCounter.incrementAndGet());
+            if (task.getCreatedAt() == null) {
+                task.setCreatedAt(System.currentTimeMillis()); // Set createdAt for new tasks
+            }
         }
         taskStore.put(task.getId(), task);
         return task;
@@ -86,6 +90,13 @@ public class InMemoryTaskRepository implements TaskRepository {
     public List<TaskManagement> findByAssigneeIdIn(List<Long> assigneeIds) {
         return taskStore.values().stream()
                 .filter(task -> assigneeIds.contains(task.getAssigneeId()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TaskManagement> findByPriority(Priority priority) {
+        return taskStore.values().stream()
+                .filter(task -> task.getPriority() == priority)
                 .collect(Collectors.toList());
     }
 }
